@@ -1,0 +1,32 @@
+ansible-repo/
+├── group_vars/
+├── host_vars/
+├── inventories/
+│   ├── development/
+│   │   ├── hosts
+│   │   └── group_vars/
+│   │       └── all.yml
+│   ├── production/
+│   │   ├── hosts
+│   │   └── group_vars/
+│   │       └── all.yml
+│   └── staging/
+│       ├── hosts
+│       └── group_vars/
+│           └── all.yml
+├── library/
+├── roles/
+│   ├── common/
+│   │   ├── tasks/
+│   │   ├── templates/
+│   │   └── files/
+│   ├── webserver/
+│   │   ├── tasks/
+│   │   ├── templates/
+│   │   └── files/
+│   └── ...
+├── site.yml
+├── ansible.cfg
+├── requirements.yml
+├── vault.yml
+└── README.md
