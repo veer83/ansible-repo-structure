@@ -30,3 +30,84 @@ ansible-repo/
 ├── requirements.yml
 ├── vault.yml
 └── README.md
+
+Second:
+
+ansible-repo/
+├── group_vars/
+├── host_vars/
+├── inventories/
+│   ├── development/
+│   │   ├── hosts
+│   │   └── group_vars/
+│   │       └── all.yml
+│   ├── production/
+│   │   ├── hosts
+│   │   └── group_vars/
+│   │       └── all.yml
+│   └── staging/
+│       ├── hosts
+│       └── group_vars/
+│           └── all.yml
+├── library/
+├── roles/
+│   ├── requirements.yml
+           - name: my_role
+             src: https://github.com/your-organization/my_role.git
+            scm: git
+            version: master 
+│   
+├── site.yml
+├── ansible.cfg
+├── 
+├── vault.yml
+└── README.md
+
+Github Org:
+Repo of my_role/
+├── defaults/
+│   └── main.yml
+├── handlers/
+│   └── main.yml
+├── meta/
+│   └── main.yml
+├── tasks/
+│   └── main.yml
+├── templates/
+├── vars/
+│   └── main.yml
+└── README.md
+
+
+THIRD:
+ansible-roles-repo/
+├── roles/
+│   ├── role1/
+│   │   ├── tasks/
+│   │   │   └── main.yml
+│   │   ├── handlers/
+│   │   │   └── main.yml
+│   │   ├── templates/
+│   │   │   └── template1.j2
+│   │   ├── files/
+│   │   │   └── file1.txt
+│   │   ├── vars/
+│   │   │   └── main.yml
+│   │   ├── defaults/
+│   │   │   └── main.yml
+│   │   ├── meta/
+│   │   │   └── main.yml
+│   │   └── README.md
+│   ├── role2/
+│   │   └── ... (similar structure as role1)
+│   └── ...
+├── inventories/
+│   ├── production/
+│   │   └── hosts
+│   └── staging/
+│       └── hosts
+├── playbooks/
+│   ├── site.yml
+│   └── ...
+└── README.md
+
