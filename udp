@@ -1,0 +1,58 @@
+stall Logstash: Make sure you have Logstash installed on your system. You can download it from the official website or install it using package managers like apt or yum.
+Configure Logstash for UDP input: Create a Logstash configuration file named "udp_load_test.conf" with the following content:
+
+Configure Logstash for UDP input: Create a Logstash configuration file named "udp_load_test.conf" with the following content:
+input {
+  udp {
+    port => 5000
+    codec => plain {
+      charset => "UTF-8"
+    }
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+}
+
+In this configuration, we set up the UDP input to listen on port 5000, and the received messages will be printed to the console using the stdout output.
+
+Set up Logstash instances for load balancing: Install and configure multiple instances of Logstash on different machines or virtual machines. Ensure each instance has the same configuration as mentioned in step 2.
+Configure a Load Balancer: Set up a load balancer like Nginx, HAProxy, or a hardware load balancer to distribute UDP traffic across the Logstash instances. Configure the load balancer to forward UDP packets to the UDP input ports of the Logstash instances.
+Write the bash script: Create a bash script named "udp_load_test.sh" with the following content:
+
+Set up Logstash instances for load balancing: Install and configure multiple instances of Logstash on different machines or virtual machines. Ensure each instance has the same configuration as mentioned in step 2.
+Configure a Load Balancer: Set up a load balancer like Nginx, HAProxy, or a hardware load balancer to distribute UDP traffic across the Logstash instances. Configure the load balancer to forward UDP packets to the UDP input ports of the Logstash instances.
+Write the bash script: Create a bash script named "udp_load_test.sh" with the following content:
+
+#!/bin/bash
+
+# Number of concurrent connections to simulate
+CONCURRENT_CONNECTIONS=100
+
+# Load Balancer IP and Port
+LOAD_BALANCER_IP="your_load_balancer_ip"
+LOAD_BALANCER_PORT=5000
+
+# Function to simulate a single connection and send a message
+simulate_connection() {
+  local message="Test message from connection $1"
+  echo -n "$message" | nc -u -w0 $LOAD_BALANCER_IP $LOAD_BALANCER_PORT
+  echo "Sent: $message"
+}
+
+# Simulate concurrent connections
+for ((i=1; i<=$CONCURRENT_CONNECTIONS; i++)); do
+  simulate_connection $i &
+done
+
+# Wait for all connections to finish
+wait
+
+Replace "your_load_balancer_ip" with the IP address of your load balancer.
+
+Make the script executable: Run the following command to make the bash script executable:
+
+The script will create multiple concurrent connections and send UDP messages to the load balancer. The load balancer will then distribute the traffic across the multiple Logstash instances. Each Logstash instance will process the incoming UDP messages and display them on the console using the stdout output plugin.
+
+When performing a load test, be cautious with the number of concurrent connections you simulate, as it may put a strain on your system and network. Start with a reasonable number of connections and gradually increase it to test the performance of your Logstash setup effectively.
