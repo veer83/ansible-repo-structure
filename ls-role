@@ -1,0 +1,142 @@
+# tasks/main.yml
+- include_tasks: retrieve_vault_password.yml
+- include_tasks: install_upgrade.yml
+- include_tasks: ssl_config.yml
+- include_tasks: manage_plugins.yml
+- include_tasks: configure_logstash.yml
+
+
+# tasks/install_upgrade.yml
+- name: Check if Logstash is installed
+  stat:
+    path: "{{ logstash_install_dir }}/bin/logstash"
+  register: logstash_installed
+
+- name: Install or upgrade Logstash
+  yum:
+    name: "logstash-{{ logstash_version }}"
+    state: "{{ 'latest' if logstash_installed.stat.exists and logstash_version != logstash_installed.stat.size else 'present' }}"
+  become: true
+
+
+# tasks/ssl_config.yml
+- name: Copy SSL certificates
+  copy:
+    src: "ssl/{{ environment }}/"
+    dest: "{{ logstash_config_dir }}/ssl"
+  become: true
+  notify: restart logstash
+
+# tasks/manage_plugins.yml
+- name: Install Logstash Plugins
+  command: "{{ logstash_install_dir }}/bin/logstash-plugin install {{ item.plugin_name }} {{ item.version | default('latest') }}"
+  with_items: "{{ logstash_plugins }}"
+  become: true
+  when: item.version is defined
+
+- name: Remove unused plugins
+  command: "{{ logstash_install_dir }}/bin/logstash-plugin remove {{ item }}"
+  with_items: "{{ installed_plugins.stdout_lines }}"
+  become: true
+  args:
+    warn: false
+  when: item not in logstash_plugins | map(attribute='plugin_name') | list
+  register: removed_plugins
+  changed_when: removed_plugins.stdout_lines | length > 0
+
+
+# tasks/configure_logstash.yml
+- name: Copy logstash.yml template
+  template:
+    src: "logstash.yml.j2"
+    dest: "{{ logstash_config_dir }}/logstash.yml"
+  become: true
+  notify: restart logstash
+
+
+Environment-Specific Variables (vars/development.yml and vars/production.yml):
+# vars/development.yml
+environment: "development"
+logstash_version: "7.14.0"
+logstash_config_dir: "/etc/logstash_dev"
+logstash_plugins:
+  - plugin_name: "logstash-input-beats"
+    version: "x.y.z"
+
+# vars/stg.yml
+environment: "production"
+logstash_version: "7.14.1"
+logstash_config_dir: "/etc/logstash_prod"
+logstash_plugins:
+  - plugin_name: "logstash-input-beats"
+    version: "a.b.c"
+
+
+Playbooks for Environments (logstash_playbooks/development.yml and logstash_playbooks/production.yml)
+# logstash_playbooks/development.yml
+- name: Apply Logstash role for Development
+  hosts: development_servers
+  roles:
+    - logstash_role
+  vars_files:
+    - ../vars/development.yml
+
+# logstash_playbooks/production.yml
+- name: Apply Logstash role for Production
+  hosts: production_servers
+  roles:
+    - logstash_role
+  vars_files:
+    - ../vars/production.yml
+
+
+# tasks/retrieve_vault_password.yml
+
+- name: Retrieve Password from Vault
+  hosts: localhost
+  vars_prompt:
+    - name: ad_username
+      prompt: "Enter AD Username:"
+      private: no
+    - name: ad_password
+      prompt: "Enter AD Password:"
+      private: yes
+
+  tasks:
+    - name: Authenticate to HashiCorp Vault using AD
+      hvac_auth:
+        url: "{{ vault_url }}"
+        method: ad
+        mount_point: auth/ad
+        username: "{{ ad_username }}"
+        password: "{{ ad_password }}"
+      register: vault_auth_response
+
+    - name: Retrieve Password from Vault
+      hvac_read:
+        url: "{{ vault_url }}"
+        token: "{{ vault_auth_response.auth.client_token }}"
+        path: secret/data/passwords
+      register: vault_response
+
+    - name: Store Password in Variable
+      set_fact:
+        vault_password: "{{ vault_response.data.data.password }}"
+
+.Use Retrieved Password in logstash.yml.j2 Template:
+In the templates/logstash.yml.j2 template, you can now use the vault_password variable wherever needed:
+
+# templates/logstash.yml.j2
+...
+some_key: "{{ vault_password }}"
+...
+
+
+
+
+
+
+
+
+
+
