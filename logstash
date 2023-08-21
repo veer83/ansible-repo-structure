@@ -1,0 +1,30 @@
+logstash_role/
+├── defaults/
+│   └── main.yml
+├── files/
+│   ├── logstash.repo.j2
+│   └── ssl/
+│       ├── development/
+│       │   ├── cert.pem
+│       │   └── key.pem
+│       └── production/
+│           ├── cert.pem
+│           └── key.pem
+├── handlers/
+│   └── main.yml
+├── meta/
+│   └── main.yml
+├── tasks/
+│   ├── main.yml
+│   ├── configure_logstash.yml
+│   └── manage_plugins.yml
+├── templates/
+│   ├── logstash.yml.j2
+│   └── logstash.repo.j2
+├── vars/
+│   ├── main.yml
+│   ├── development.yml
+│   └── production.yml
+└── logstash_playbooks/
+    ├── development.yml
+    └── production.yml
