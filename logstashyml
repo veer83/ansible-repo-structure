@@ -1,0 +1,76 @@
+# ======================== Logstash Configuration =========================
+#
+# This file is used to configure various settings for Logstash.
+# For more information, consult the documentation:
+# https://www.elastic.co/guide/en/logstash/current/index.html
+#
+# ======================== Node =========================
+#
+node.name: {{ logstash_node_name }}
+
+# ======================== Paths =========================
+#
+# The directory where Logstash stores temporary files.
+path.data: {{ logstash_data_path }}
+
+# The directory where Logstash stores logs.
+path.logs: {{ logstash_log_path }}
+
+# ======================== Network =========================
+#
+# Set the address Logstash binds to.
+http.host: {{ logstash_http_host }}
+http.port: {{ logstash_http_port }}
+
+# ======================== Logging =========================
+#
+# Specify the log level (options: debug, info, warn, error, fatal).
+log.level: {{ log_level }}
+
+# ======================== X-Pack (Elastic Stack Security) Settings =========================
+#
+xpack.monitoring.enabled: true
+xpack.monitoring.elasticsearch.hosts: ["{{ elasticsearch_hosts }}"]
+xpack.monitoring.elasticsearch.username: "{{ elasticsearch_username }}"
+xpack.monitoring.elasticsearch.password: "{{ elasticsearch_password }}"
+
+# SSL settings
+xpack.ssl.certificate_authority: "{{ ssl_certificate_authority }}"
+xpack.ssl.verification_mode: "{{ ssl_verification_mode }}"
+
+# ======================== X-Pack (Elastic Stack Management) Settings =========================
+#
+xpack.management.enabled: true
+xpack.management.pipeline.id: [{{ pipeline_ids }}]
+
+# Monitor cluster UUID
+monitor.cluster_uuid: "{{ cluster_uuid }}"
+
+# ======================== Other Settings =========================
+#
+# Other Logstash settings can be configured here.
+
+
+---
+- name: Deploy Logstash
+  hosts: logstash_servers
+  vars:
+    logstash_node_name: "my-logstash-node"
+    logstash_data_path: "/var/lib/logstash"
+    logstash_log_path: "/var/log/logstash"
+    logstash_http_host: "127.0.0.1"
+    logstash_http_port: 9600
+    log_level: "info"
+    elasticsearch_hosts: "https://your-elasticsearch-host:9200"
+    elasticsearch_username: "your-username"
+    elasticsearch_password: "your-password"
+    ssl_certificate_authority: "/path/to/ca.crt"
+    ssl_verification_mode: "certificate"
+    pipeline_ids: ["my-pipeline-id-1", "my-pipeline-id-2"]
+    cluster_uuid: "your-cluster-uuid"
+  tasks:
+    - name: Copy Logstash configuration
+      template:
+        src: logstash.yml.j2
+        dest: /etc/logstash/logstash.yml
+
