@@ -29,11 +29,10 @@ log.level: {{ log_level }}
 
 # ======================== X-Pack (Elastic Stack Security) Settings =========================
 #
-xpack.monitoring.enabled: true
-xpack.monitoring.elasticsearch.hosts: ["{{ elasticsearch_hosts }}"]
-xpack.monitoring.elasticsearch.username: "{{ elasticsearch_username }}"
-xpack.monitoring.elasticsearch.password: "{{ elasticsearch_password }}"
-
+# X-Pack settings for Elastic Stack Management
+xpack.management.elasticsearch.username: "{{ xpack_management_username }}"
+# Read password from Logstash keystore
+xpack.management.elasticsearch.password: "keystore:your_keystore_password_key"
 # SSL settings
 xpack.ssl.certificate_authority: "{{ ssl_certificate_authority }}"
 xpack.ssl.verification_mode: "{{ ssl_verification_mode }}"
@@ -61,14 +60,19 @@ monitor.cluster_uuid: "{{ cluster_uuid }}"
     logstash_http_host: "127.0.0.1"
     logstash_http_port: 9600
     log_level: "info"
-    elasticsearch_hosts: "https://your-elasticsearch-host:9200"
-    elasticsearch_username: "your-username"
-    elasticsearch_password: "your-password"
+pack_management_username: "your-username"
+    keystore_password: "your-keystore-password"
+    keystore_password_key: "your_keystore_password_key"
+    logstash_home: "/path/to/logstash
     ssl_certificate_authority: "/path/to/ca.crt"
     ssl_verification_mode: "certificate"
     pipeline_ids: ["my-pipeline-id-1", "my-pipeline-id-2"]
     cluster_uuid: "your-cluster-uuid"
   tasks:
+
+- name: Add password to Logstash keystore
+      command: "echo '{{ keystore_password }}' | {{ logstash_home }}/bin/logstash-keystore add {{ keystore_password_key }}"
+
     - name: Copy Logstash configuration
       template:
         src: logstash.yml.j2
