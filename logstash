@@ -1,30 +1,19 @@
-logstash_role/
-├── defaults/
-│   └── main.yml
-├── files/
-│   ├── logstash.repo.j2
-│   └── ssl/
-│       ├── development/
-│       │   ├── cert.pem
-│       │   └── key.pem
-│       └── production/
-│           ├── cert.pem
-│           └── key.pem
-├── handlers/
-│   └── main.yml
-├── meta/
-│   └── main.yml
-├── tasks/
-│   ├── main.yml
-│   ├── configure_logstash.yml
-│   └── manage_plugins.yml
-├── templates/
-│   ├── logstash.yml.j2
-│   └── logstash.repo.j2
-├── vars/
-│   ├── main.yml
-│   ├── development.yml
-│   └── production.yml
-└── logstash_playbooks/
-    ├── development.yml
-    └── production.yml
+---
+- name: Execute chef-client and grep for a specific recipe
+  hosts: your_targeted_hosts
+  become: yes
+  tasks:
+    - name: Run chef-client
+      command: chef-client
+      register: chef_client_output
+      ignore_errors: true  # Prevent playbook from stopping if chef-client fails
+
+    - name: Check if specific recipe was applied
+      shell: echo "{{ chef_client_output.stdout }}" | grep 'my_specific_recipe'
+      register: grep_output
+      ignore_errors: true
+
+    - name: Print grep result
+      debug:
+        var: grep_output.stdout_lines
+      when: grep_output.rc == 0  # Condition to check if grep found something
