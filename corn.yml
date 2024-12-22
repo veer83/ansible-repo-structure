@@ -11,11 +11,10 @@ spec:
         spec:
           containers:
           - name: apic-swagger-container
-            image: acdbw-docker-snapshots.artifactory-qa.c.net/apic-swagger-container:latest
-            imagePullPolicy: Always
+            image: cdb-docker-snapshots.artifactory-qa.bmogc.net/apic-swagger-container:latest
             env:
             - name: APIC_ENVIRONMENTS
-              value: "dev,sit1,perf,prod"
+              value: "dev,sit1,sit2,prod"
             - name: USERNAME
               valueFrom:
                 secretKeyRef:
@@ -26,4 +25,4 @@ spec:
                 secretKeyRef:
                   name: apic-credentials
                   key: password
-          restartPolicy: Never
+          restartPolicy: OnFailure
