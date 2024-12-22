@@ -1,1 +1,29 @@
-https://chat.openai.com/share/eaf85152-c08a-4321-af0c-cd83525be9cd
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: apic-swagger-cronjob
+  namespace: your-namespace
+spec:
+  schedule: "0 0 * * *" # Runs every 24 hours
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: apic-swagger-container
+            image: acdbw-docker-snapshots.artifactory-qa.c.net/apic-swagger-container:latest
+            imagePullPolicy: Always
+            env:
+            - name: APIC_ENVIRONMENTS
+              value: "dev,sit1,perf,prod"
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: apic-credentials
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: apic-credentials
+                  key: password
+          restartPolicy: Never
