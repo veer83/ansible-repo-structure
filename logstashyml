@@ -5,34 +5,61 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  ARTIFACTORY_URL: 'https://artifactorc.net/artifactory'
+  ARTIFACTORY_URL: 'https://'
   APIC_CLI_PATH: 'path/to/apic-cli.tar.gz'
   IMAGE_NAME: 'apic-swagger-container'
   IMAGE_TAG: 'latest'
 
-steps:
-# Step 1: Use Python
-- task: UsePythonVersion@0
-  displayName: 'Use Python 3.9'
-  inputs:
-    versionSpec: '3.9'
-    addToPath: true
+stages:
+# Stage 1: Setup Python Environment
+- stage: SetupPython
+  displayName: "Setup Python Environment"
+  jobs:
+  - job: InstallPython
+    displayName: "Install Python 3.9"
+    steps:
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.9'
+      inputs:
+        versionSpec: '3.9'
+        addToPath: true
 
-# Step 2: Build Docker Image
-- script: |
-    docker build -t acdfb-docker-snapshots.artifactory-qa.net/$(IMAGE_NAME):$(IMAGE_TAG) \
-      --build-arg ARTIFACTORY_USER=$(artifactory_user) \
-      --build-arg ARTIFACTORY_PASSWORD=$(artifactory_password) \
-      --build-arg ARTIFACTORY_URL=$(ARTIFACTORY_URL)/$(APIC_CLI_PATH) .
-  displayName: 'Build Docker Image'
+# Stage 2: Build Docker Image
+- stage: BuildDocker
+  displayName: "Build Docker Image"
+  dependsOn: SetupPython
+  jobs:
+  - job: BuildImage
+    displayName: "Build Docker Image"
+    steps:
+    - script: |
+        docker build -t /$(IMAGE_NAME):$(IMAGE_TAG) \
+          --build-arg ARTIFACTORY_USER=$(artifactory_user) \
+          --build-arg ARTIFACTORY_PASSWORD=$(artifactory_password) \
+          --build-arg ARTIFACTORY_URL=$(ARTIFACTORY_URL)/$(APIC_CLI_PATH) .
+      displayName: 'Build Docker Image'
 
-# Step 3: Push Docker Image to Artifactory
-- script: |
-    docker login -u $(artifactory_user) -p $(artifactory_password) acdfb-docker-snapshots.artifactory-qa..net
-    docker push acdfb-docker-snapshots.artifactory-qa.c.net/$(IMAGE_NAME):$(IMAGE_TAG)
-  displayName: 'Push Docker Image'
+# Stage 3: Push Docker Image
+- stage: PushDocker
+  displayName: "Push Docker Image"
+  dependsOn: BuildDocker
+  jobs:
+  - job: PushImage
+    displayName: "Push Docker Image to Artifactory"
+    steps:
+    - script: |
+        docker login -u $(artifactory_user) -p $(artifactory_password) cssdf.net
+        docker push abc-docker-snapshots.artifactory.net/$(IMAGE_NAME):$(IMAGE_TAG)
+      displayName: 'Push Docker Image'
 
-# Step 4: Cleanup Docker Resources
-- script: |
-    docker system prune -f
-  displayName: 'Cleanup Docker Resources'
+# Stage 4: Cleanup Docker Resources
+- stage: Cleanup
+  displayName: "Cleanup Docker Resources"
+  dependsOn: PushDocker
+  jobs:
+  - job: CleanupJob
+    displayName: "Cleanup Docker Resources"
+    steps:
+    - script: |
+        docker system prune -f
+      displayName: 'Cleanup Docker Resources'
