@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  ARTIFACTORY_URL: 'https://artifactory-qa.c.net/artifactory'
+  ARTIFACTORY_URL: 'https://artifactorc.net/artifactory'
   APIC_CLI_PATH: 'path/to/apic-cli.tar.gz'
   IMAGE_NAME: 'apic-swagger-container'
   IMAGE_TAG: 'latest'
