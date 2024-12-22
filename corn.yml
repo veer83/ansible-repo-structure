@@ -11,7 +11,7 @@ spec:
         spec:
           containers:
           - name: apic-swagger-container
-            image: cdb-docker-snapshots.artifactory-qa.bmogc.net/apic-swagger-container:latest
+            image: ab-docker-snapshots.artifactory-.net/apic-swagger-container:latest
             env:
             - name: APIC_ENVIRONMENTS
               value: "dev,sit1,sit2,prod"
