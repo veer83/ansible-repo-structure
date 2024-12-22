@@ -1,80 +1,39 @@
-# ======================== Logstash Configuration =========================
-#
-# This file is used to configure various settings for Logstash.
-# For more information, consult the documentation:
-# https://www.elastic.co/guide/en/logstash/current/index.html
-#
-# ======================== Node =========================
-#
-node.name: {{ logstash_node_name }}
+trigger:
+- main
 
-# ======================== Paths =========================
-#
-# The directory where Logstash stores temporary files.
-path.data: {{ logstash_data_path }}
+pool:
+  vmImage: 'ubuntu-latest'
 
-# The directory where Logstash stores logs.
-path.logs: {{ logstash_log_path }}
+variables:
+  ARTIFACTORY_URL: 'https://artifactoryt/artifactory'
+  APIC_CLI_PATH: 'path/to/apic-cli.tar.gz'
+  IMAGE_NAME: 'apic-swagger-container'
+  IMAGE_TAG: 'latest'
+ 
 
-# ======================== Network =========================
-#
-# Set the address Logstash binds to.
-http.host: {{ logstash_http_host }}
-http.port: {{ logstash_http_port }}
+steps:
+# Use Python
+- task: UsePythonVersion@0
+  displayName: 'Use Python 3.9'
+  inputs:
+    versionSpec: '3.9'
+    addToPath: true
 
-# ======================== Logging =========================
-#
-# Specify the log level (options: debug, info, warn, error, fatal).
-log.level: {{ log_level }}
+# Build Docker Image
+- script: |
+    docker build -t .net/$(IMAGE_NAME):$(IMAGE_TAG) \
+      --build-arg ARTIFACTORY_USER=$(artifactory_user) \
+      --build-arg ARTIFACTORY_PASSWORD=$(artifactory_password) \
+      --build-arg ARTIFACTORY_URL=$(ARTIFACTORY_URL)/$(APIC_CLI_PATH) .
+  displayName: 'Build Docker Image'
 
-# ======================== X-Pack (Elastic Stack Security) Settings =========================
-#
-# X-Pack settings for Elastic Stack Management
-xpack.management.elasticsearch.username: "{{ xpack_management_username }}"
-# Read password from Logstash keystore
-xpack.management.elasticsearch.password: "keystore:your_keystore_password_key"
-# SSL settings
-xpack.ssl.certificate_authority: "{{ ssl_certificate_authority }}"
-xpack.ssl.verification_mode: "{{ ssl_verification_mode }}"
+# Push Docker Image
+- script: |
+    docker login -u $(artifactory_user) -p $(artifactory_password) artifcatory
+    docker push cet/$(IMAGE_NAME):$(IMAGE_TAG)
+  displayName: 'Push Docker Image'
 
-# ======================== X-Pack (Elastic Stack Management) Settings =========================
-#
-xpack.management.enabled: true
-xpack.management.pipeline.id: [{{ pipeline_ids }}]
-
-# Monitor cluster UUID
-monitor.cluster_uuid: "{{ cluster_uuid }}"
-
-# ======================== Other Settings =========================
-#
-# Other Logstash settings can be configured here.
-
-
----
-- name: Deploy Logstash
-  hosts: logstash_servers
-  vars:
-    logstash_node_name: "my-logstash-node"
-    logstash_data_path: "/var/lib/logstash"
-    logstash_log_path: "/var/log/logstash"
-    logstash_http_host: "127.0.0.1"
-    logstash_http_port: 9600
-    log_level: "info"
-pack_management_username: "your-username"
-    keystore_password: "your-keystore-password"
-    keystore_password_key: "your_keystore_password_key"
-    logstash_home: "/path/to/logstash
-    ssl_certificate_authority: "/path/to/ca.crt"
-    ssl_verification_mode: "certificate"
-    pipeline_ids: ["my-pipeline-id-1", "my-pipeline-id-2"]
-    cluster_uuid: "your-cluster-uuid"
-  tasks:
-
-- name: Add password to Logstash keystore
-      command: "echo '{{ keystore_password }}' | {{ logstash_home }}/bin/logstash-keystore add {{ keystore_password_key }}"
-
-    - name: Copy Logstash configuration
-      template:
-        src: logstash.yml.j2
-        dest: /etc/logstash/logstash.yml
-
+# Cleanup Docker Resources
+- script: |
+    docker system prune -f
+  displayName: 'Cleanup Docker Resources'
